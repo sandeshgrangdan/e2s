@@ -1,0 +1,68 @@
+[package]
+name = "e2s"
+version = "0.0.1"
+edition = "2021"
+
+# Github Repo
+authors = ["Sandesh Grangdan<sandesht801@gmail.com>"]
+description = "A TUI for managing AWS EC2 SSH access"
+repository = "https://github.com/sandeshgrangdan/e2s"
+homepage = "https://github.com/sandeshgrangdan/e2s"
+license = "MIT OR Apache-2.0"
+
+[package.metadata.wix]
+upgrade-guid = "9A0A9FB4-1F65-4836-BB44-0C5C053F5971"
+path-guid = "75DA7874-955D-4448-8F17-DCA609DD47F5"
+license = false
+eula = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# Sandesh
+[dependencies]
+aws-config = "1.5.13"
+aws-sdk-ec2 = "1.138.0"
+clap = { version = "4.5.16", features = ["derive"] }
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+dirs = "6.0.0"
+fakeit = "1.4.1"
+futures = "0.3.31"
+itertools = "0.14.0"
+pretty_assertions = "1.4.1"
+rand = "0.8.5"
+ratatui = "0.29.0"
+serde = { version = "1.0.228", features = ["derive"] }
+toml = "0.8"
+time = "0.3.36"
+tokio = { version = "1.35.1", features = ["full"] }
+unicode-width = "=0.2.0"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+# Config for 'cargo dist'
+[workspace.metadata.dist]
+# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.21.0"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = ["shell", "powershell", "npm", "homebrew", "msi"]
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl",
+  "x86_64-pc-windows-msvc",
+]
+# The archive format to use for windows builds (defaults .zip)
+windows-archive = ".tar.gz"
+# The archive format to use for non-windows builds (defaults .tar.xz)
+unix-archive = ".tar.gz"
+# Path that installers should place binaries in
+install-path = "CARGO_HOME"
+# Whether to install an updater program
+install-updater = true
