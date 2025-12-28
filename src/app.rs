@@ -20,10 +20,10 @@ pub mod input;
 pub enum SelectedTab {
     List,
     Details,
-}
+} 
 
 // ANCHOR_END: action
-/// AWS Systems Manager - Parameter Store TUI Client
+/// A TUI for managing AWS EC2 SSH access
 #[derive(Parser, Debug, Default, Clone)]
 #[command(version, about, long_about = None)]
 pub struct Args {

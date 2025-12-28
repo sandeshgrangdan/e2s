@@ -76,7 +76,7 @@ impl SshUsers {
     fn get_config_path() -> Option<PathBuf> {
         let mut path = dirs::home_dir()?;
         path.push(".config");
-        path.push("ec2");
+        path.push("e2s");
         path.push("config.toml");
         Some(path)
     }
