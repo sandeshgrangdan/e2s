@@ -5,13 +5,13 @@ use crate::app::{App, SelectedTab};
 use crate::tui::Tui;
 
 async fn open_editor(app: &mut App, tui: &mut Tui) {
-    let _ = tui.init_vim();
+    let _ = tui.init_ec2();
 
     if let Err(e) = app.ssh().await {
         eprintln!("Error launching Vim: {}", e);
     }
 
-    let _ = tui.exit_vim();
+    let _ = tui.exit_ec2();
 }
 
 pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {

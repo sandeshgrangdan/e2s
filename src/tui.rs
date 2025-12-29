@@ -87,13 +87,13 @@ impl Tui {
         Ok(())
     }
 
-    pub fn init_vim(&mut self) -> Result<()> {
+    pub fn init_ec2(&mut self) -> Result<()> {
         ratatui::restore();
 
         Ok(())
     }
 
-    pub fn exit_vim(&mut self) -> Result<()> {
+    pub fn exit_ec2(&mut self) -> Result<()> {
         self.terminal = ratatui::init();
 
         Ok(())
