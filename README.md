@@ -14,7 +14,7 @@ A blazingly fast Terminal User Interface (TUI) for managing AWS EC2 instances, b
 - ⚡ **Fast & Lightweight** - Built with Rust for optimal performance
 
 ## 📦 Installation
-[Documentation](https://github.com/samdeshgrangdan/e2s/USAGES.md)
+[Documentation](https://github.com/sandeshgrangdan/e2s/blob/main/USAGES.md)
 
 ## 🤝 Contributing
 
