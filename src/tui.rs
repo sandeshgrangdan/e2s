@@ -89,7 +89,7 @@ impl Tui {
 
     pub fn init_ec2(&mut self) -> Result<()> {
         ratatui::restore();
-
+        self.terminal.show_cursor()?;
         Ok(())
     }
 

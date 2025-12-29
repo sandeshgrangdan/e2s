@@ -3,13 +3,13 @@
 ### Linux & macOS
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.1/e2s-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.2/e2s-installer.sh | sh
 ```
 
 ### Windows
 
 ```powershell
-powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.1/e2s-installer.ps1 | iex"
+powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.2/e2s-installer.ps1 | iex"
 ```
 
 ### Cargo

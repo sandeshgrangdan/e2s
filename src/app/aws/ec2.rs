@@ -269,11 +269,14 @@ impl App {
                 };
 
                 let status = Command::new("ssh")
-                    .arg("-i")
-                    .arg(key_path)
-                    .arg(format!("{}@{}", user, ip))
-                    .status()?;
-
+                .arg("-i")
+                .arg(key_path)
+                .arg(format!("{}@{}", user, ip))
+                .stdin(std::process::Stdio::inherit())
+                .stdout(std::process::Stdio::inherit())
+                .stderr(std::process::Stdio::inherit())
+                .status()?;
+               
                 if !status.success() {
                     eprintln!("Failed to launch SSH session.");
                 }

@@ -8,7 +8,7 @@ async fn open_editor(app: &mut App, tui: &mut Tui) {
     let _ = tui.init_ec2();
 
     if let Err(e) = app.ssh().await {
-        eprintln!("Error launching Vim: {}", e);
+        eprintln!("Error SSH to the server: {}", e);
     }
 
     let _ = tui.exit_ec2();
