@@ -45,6 +45,31 @@ impl Data {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectMode {
+    Public,
+    Private,
+    Ssm,
+}
+
+impl ConnectMode {
+    pub fn next(self) -> Self {
+        match self {
+            ConnectMode::Public => ConnectMode::Private,
+            ConnectMode::Private => ConnectMode::Ssm,
+            ConnectMode::Ssm => ConnectMode::Public,
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        *self = match *self {
+            ConnectMode::Public => ConnectMode::Private,
+            ConnectMode::Private => ConnectMode::Ssm,
+            ConnectMode::Ssm => ConnectMode::Public,
+        };
+    }
+}
+
 fn generate_instance_id() -> String {
     let hex: String = (0..17)
         .map(|_| format!("{:x}", rand::random::<u8>() % 16))
@@ -253,30 +278,52 @@ impl App {
     pub async fn ssh(&mut self) -> io::Result<()> {
         if let Some(selected) = self.state.selected() {
             if let Some(item) = self.display_items.get(selected) {
-                let key_path = match &self.ssh_keys.selected_key {
-                    Some(key) => key,
-                    None => {
-                        println!("No SSH key selected.");
-                        return Ok(());
+                let mut cmd = match self.connect_mode {
+                    ConnectMode::Public | ConnectMode::Private => {
+                        let key_path = match &self.ssh_keys.selected_key {
+                            Some(key) => key,
+                            None => {
+                                eprintln!("No SSH key selected.");
+                                return Ok(());
+                            }
+                        };
+                        let user = self
+                            .ssh_user
+                            .selected_user
+                            .as_deref()
+                            .unwrap_or("ec2-user");
+                        let ip = match self.connect_mode {
+                            ConnectMode::Public => &item.public_ipv4,
+                            ConnectMode::Private => &item.private_ipv4,
+                            _ => unreachable!(),  
+                        };
+                        let mut ssh_cmd = Command::new("ssh");
+                        ssh_cmd.args(["-i", key_path]);
+                        ssh_cmd.arg(format!("{}@{}", user, ip));
+                        ssh_cmd
+                    }
+                    ConnectMode::Ssm => {
+                        let mut ssm_cmd = Command::new("aws");
+                        ssm_cmd.args([
+                            "ssm",
+                            "start-session",
+                            "--target",
+                            &item.instance_id,
+                        ]);
+
+                        if self.args.region != *"None" {
+                            ssm_cmd.args(["--region", &self.args.region]);
+                        } 
+
+                        if self.args.profile != *"None" {
+                            ssm_cmd.args(["--profile", &self.args.profile]);
+                        } 
+                        ssm_cmd
                     }
                 };
 
-                let user = self.ssh_user.selected_user.as_deref().unwrap_or("ec2-user");
-                let ip = if self.private {
-                    &item.private_ipv4
-                } else {
-                    &item.public_ipv4
-                };
+                let status = cmd.status()?;
 
-                let status = Command::new("ssh")
-                .arg("-i")
-                .arg(key_path)
-                .arg(format!("{}@{}", user, ip))
-                .stdin(std::process::Stdio::inherit())
-                .stdout(std::process::Stdio::inherit())
-                .stderr(std::process::Stdio::inherit())
-                .status()?;
-               
                 if !status.success() {
                     eprintln!("Failed to launch SSH session.");
                 }

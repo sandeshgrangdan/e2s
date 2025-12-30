@@ -4,7 +4,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Padding, Paragraph, Wrap},
 };
 
-use crate::app::App;
+use crate::app::{App, aws::ec2::ConnectMode};
 
 pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
     let title_block = Block::default()
@@ -13,7 +13,11 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
         .padding(Padding::new(2, 1, 0, 0))
         .border_type(BorderType::Plain);
 
-    let ssh_from_private = if app.private { "Private" } else { "Public" };
+    let ssh_from_private = match app.connect_mode {
+        ConnectMode::Private => "Private",
+        ConnectMode::Public => "Public",
+        ConnectMode::Ssm => "SSM",
+    };
 
     let selected_ssh_key = if Some(app.ssh_keys.selected_key.clone().unwrap_or_default()) != None {
         app.ssh_keys.selected_key.clone().unwrap_or_default()

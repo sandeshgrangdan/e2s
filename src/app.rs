@@ -3,7 +3,7 @@ use clap::Parser;
 use rand::Rng;
 
 use crate::app::{
-    aws::ec2::Ec2Client,
+    aws::ec2::{ConnectMode, Ec2Client},
     input::{ssh_keys::SshKeys, ssh_user::SshUsers},
 };
 use input::user_input::{
@@ -49,7 +49,8 @@ pub struct App {
     pub ec2_client: Ec2Client,
     pub ssh_keys: SshKeys,
     pub ssh_user: SshUsers,
-    pub private: bool,
+    pub connect_mode: ConnectMode,
+
 }
 
 // ANCHOR: application_impl
@@ -70,7 +71,7 @@ impl App {
             ec2_client: Ec2Client::None,
             ssh_keys: SshKeys::load(),
             ssh_user: SshUsers::load(),
-            private: true,
+            connect_mode: ConnectMode::Public,
         }
     }
 

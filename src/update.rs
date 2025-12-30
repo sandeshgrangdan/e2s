@@ -47,7 +47,7 @@ pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
                 app.ssh_user.previous();
             }
             KeyCode::Char('p') => {
-                app.private = !app.private;
+                app.connect_mode.toggle();
             }
             KeyCode::Char('?') => {
                 app.show_help = !app.show_help;

@@ -26,15 +26,15 @@ use update::update;
 // ANCHOR: main
 #[tokio::main]
 async fn main() -> Result<()> {
-    use std::time::Instant;
+    // use std::time::Instant;
     // Create an application.
     let mut app = App::new(app::Args::parse());
     app.set_ec2_client().await;
 
-    let start = Instant::now();
+    // let start = Instant::now();
     app.fetch_ec2_data().await;
-    let duration = start.elapsed();
-    println!("fetch_ec2_data took: {:?}", duration);
+    // let duration = start.elapsed();
+    // println!("fetch_ec2_data took: {:?}", duration);
 
     // Initialize the terminal user interface.
     let terminal = ratatui::init();
