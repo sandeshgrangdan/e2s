@@ -1,11 +1,15 @@
 // ANCHOR: all
 
 // ANCHOR: tui_imports
-use std::{io, panic};
+use std::{
+    io::{self, stdout},
+    panic,
+};
 
 use color_eyre::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
+    execute,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
@@ -87,15 +91,15 @@ impl Tui {
         Ok(())
     }
 
-    pub fn init_ec2(&mut self) -> Result<()> {
+    pub fn init_ec2_ssh(&mut self) -> Result<()> {
         ratatui::restore();
         self.terminal.show_cursor()?;
         Ok(())
     }
 
-    pub fn exit_ec2(&mut self) -> Result<()> {
+    pub fn exit_ec2_ssh(&mut self) -> Result<()> {
         self.terminal = ratatui::init();
-
+        self.terminal.clear()?;
         Ok(())
     }
     // ANCHOR_END: tui_exit

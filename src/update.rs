@@ -1,17 +1,23 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 
-use crate::app::input::user_input::{InputMode, UserInput};
-use crate::app::{App, SelectedTab};
+use crate::app::input::user_input::InputMode;
+use crate::app::App;
 use crate::tui::Tui;
 
-async fn open_editor(app: &mut App, tui: &mut Tui) {
-    let _ = tui.init_ec2();
+async fn handle_ssh(app: &mut App, tui: &mut Tui) {
+    if let Some(emulator) = &app.terminal.terminal.emulator {
+        if let Err(e) = app.ssh_in_new_window(emulator).await {
+            eprintln!("Error SSH to the server on new terminal: {}", e);
+        }
+    } else {
+        let _ = tui.init_ec2_ssh();
 
-    if let Err(e) = app.ssh().await {
-        eprintln!("Error SSH to the server: {}", e);
+        if let Err(e) = app.ssh().await {
+            eprintln!("Error SSH to the server: {}", e);
+        }
+
+        let _ = tui.exit_ec2_ssh();
     }
-
-    let _ = tui.exit_ec2();
 }
 
 pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
@@ -47,12 +53,12 @@ pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
                 app.ssh_user.previous();
             }
             KeyCode::Char('p') => {
-                app.connect_mode.toggle();
+                app.mode.toggle();
             }
             KeyCode::Char('?') => {
                 app.show_help = !app.show_help;
             }
-            KeyCode::Char('s') | KeyCode::Enter => open_editor(app, tui).await,
+            KeyCode::Char('s') | KeyCode::Enter => handle_ssh(app, tui).await,
             _ => {}
         },
         InputMode::Editing if key_event.kind == KeyEventKind::Press && app.search.0 => {

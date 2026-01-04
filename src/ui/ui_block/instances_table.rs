@@ -1,57 +1,108 @@
 use crate::app::App;
 use ratatui::{
     prelude::*,
-    style::Style,
-    widgets::{Block, Borders, Cell, HighlightSpacing, Padding, Paragraph, Row, Table},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Cell, Row, Table},
 };
 
 pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
+    let instance_name = app
+        .selected_item
+        .as_ref()
+        .map(|item| item.name.clone())
+        .unwrap_or_else(|| String::from("None"));
+
     let title = if app.search.1.input.is_empty() {
-        "EC2 Instances".to_string()
+        Line::from(vec![
+            Span::styled("╭─ ", Style::default().fg(Color::Rgb(100, 149, 237))),
+            Span::styled(
+                "EC2 Instances ",
+                Style::default().fg(Color::Rgb(135, 206, 250)).bold(),
+            ),
+            Span::styled("│ ", Style::default().fg(Color::DarkGray)),
+            Span::styled("Selected: ", Style::default().fg(Color::Gray)),
+            Span::styled(
+                instance_name,
+                Style::default().fg(Color::Rgb(255, 182, 193)).bold(),
+            ),
+            Span::styled(" ", Style::default().fg(Color::Rgb(100, 149, 237))),
+        ])
     } else {
-        format!("[/] {}", app.search.1.input.clone())
+        Line::from(vec![
+            Span::styled("╭─ ", Style::default().fg(Color::Rgb(100, 149, 237))),
+            Span::styled("🔍 ", Style::default().fg(Color::Yellow)),
+            Span::styled(
+                &app.search.1.input,
+                Style::default().fg(Color::Rgb(144, 238, 144)).bold(),
+            ),
+            Span::styled(" │ ", Style::default().fg(Color::DarkGray)),
+            Span::styled("EC2: ", Style::default().fg(Color::Gray)),
+            Span::styled(
+                instance_name,
+                Style::default().fg(Color::Rgb(255, 182, 193)).bold(),
+            ),
+            Span::styled(" ", Style::default().fg(Color::Rgb(100, 149, 237))),
+        ])
     };
 
     let header_cells = [
-        "Name",
-        "Status",
-        "Private IP",
-        "Key Group",
-        "AMI",
-        "Public IP",
-        "Instance ID",
+        ("Name", Color::Rgb(173, 216, 230)),
+        ("Status", Color::Rgb(255, 218, 185)),
+        ("Private IP", Color::Rgb(221, 160, 221)),
+        ("Key Group", Color::Rgb(152, 251, 152)),
+        ("AMI", Color::Rgb(255, 222, 173)),
+        ("Public IP", Color::Rgb(176, 196, 222)),
+        ("Instance ID", Color::Rgb(255, 192, 203)),
     ]
     .iter()
-    .map(|h| {
-        Cell::from(*h).style(
+    .map(|(name, color)| {
+        Cell::from(*name).style(
             Style::default()
-                .fg(Color::Gray)
-                .add_modifier(Modifier::BOLD),
+                .fg(*color)
+                .bold()
+                .add_modifier(Modifier::UNDERLINED),
         )
     });
 
-    let header = Row::new(header_cells).height(1).bottom_margin(0);
+    let header = Row::new(header_cells).height(1).bottom_margin(1);
 
-    let rows = app.display_items.iter().map(|item| {
-        let status_style = if item.status.to_lowercase() == "running" {
-            Style::default().fg(Color::Green)
+    let rows = app.display_items.iter().enumerate().map(|(idx, item)| {
+        let (status_style, status_icon) = match item.status.to_lowercase().as_str() {
+            "running" => (Style::default().fg(Color::Rgb(144, 238, 144)).bold(), "●"),
+            "stopped" => (Style::default().fg(Color::Rgb(255, 99, 71)).bold(), "■"),
+            "terminated" => (Style::default().fg(Color::Rgb(128, 128, 128)), "✕"),
+            "pending" => (Style::default().fg(Color::Rgb(255, 215, 0)).bold(), "◐"),
+            "stopping" => (Style::default().fg(Color::Rgb(255, 165, 0)).bold(), "◎"),
+            _ => (Style::default().fg(Color::White), "○"),
+        };
+
+        // Alternate row background for better readability
+        let base_style = if idx % 2 == 0 {
+            Style::default().fg(Color::Rgb(220, 220, 220))
         } else {
-            Style::default().fg(Color::Red)
+            Style::default().fg(Color::Rgb(200, 200, 200))
         };
 
         let cells = vec![
-            Cell::from(item.name.clone()).style(Style::default().fg(Color::Gray)),
-            Cell::from(item.status.clone()).style(status_style),
-            Cell::from(item.private_ipv4.clone()).style(Style::default().fg(Color::Gray)),
-            Cell::from(item.key_group.clone()).style(Style::default().fg(Color::Gray)),
-            Cell::from(item.ami_id.clone()).style(Style::default().fg(Color::Gray)),
-            Cell::from(item.public_ipv4.clone()).style(Style::default().fg(Color::Gray)),
-            Cell::from(item.instance_id.clone()).style(Style::default().fg(Color::Gray)),
+            Cell::from(format!(" {}", item.name)).style(base_style.fg(Color::Rgb(173, 216, 230))),
+            Cell::from(format!("{} {}", status_icon, item.status)).style(status_style),
+            Cell::from(item.private_ipv4.as_str()).style(base_style.fg(Color::Rgb(221, 160, 221))),
+            Cell::from(item.key_group.as_str()).style(base_style.fg(Color::Rgb(152, 251, 152))),
+            Cell::from(item.ami_id.as_str()).style(base_style.fg(Color::Rgb(255, 222, 173))),
+            Cell::from(item.public_ipv4.as_str()).style(base_style.fg(Color::Rgb(176, 196, 222))),
+            Cell::from(item.instance_id.as_str()).style(base_style.fg(Color::Rgb(255, 192, 203))),
         ];
 
         Row::new(cells).height(1)
     });
-    let bar = Span::styled(" >> ", Style::default().fg(Color::Cyan));
+
+    let bar = Span::styled(
+        " ▶ ",
+        Style::default()
+            .fg(Color::Rgb(100, 200, 255))
+            .bold()
+            .add_modifier(Modifier::RAPID_BLINK),
+    );
 
     let table = Table::new(
         rows,
@@ -69,80 +120,18 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
     .block(
         Block::default()
             .title(title)
-            .borders(Borders::LEFT | Borders::RIGHT | Borders::BOTTOM)
-            .border_type(ratatui::widgets::BorderType::Plain),
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::Rgb(100, 149, 237)))
+            .border_type(ratatui::widgets::BorderType::Rounded),
     )
     .highlight_symbol(Text::from(vec![bar.into()]))
-    // .highlight_symbol(">> ")
     .row_highlight_style(
         Style::default()
-            .bg(Color::DarkGray)
-            .add_modifier(Modifier::BOLD),
+            .bg(Color::Rgb(47, 79, 79))
+            .fg(Color::Rgb(255, 255, 255))
+            .bold()
+            .add_modifier(Modifier::ITALIC),
     );
 
     f.render_stateful_widget(table, layout, &mut app.state);
-
-    // let header_style = Style::default()
-    //     .fg(app.colors.header_fg)
-    //     .bg(app.colors.header_bg);
-    // let selected_row_style = Style::default()
-    //     .add_modifier(Modifier::REVERSED)
-    //     .fg(app.colors.selected_row_style_fg);
-    // let selected_col_style = Style::default().fg(app.colors.selected_column_style_fg);
-    // let selected_cell_style = Style::default()
-    //     .add_modifier(Modifier::REVERSED)
-    //     .fg(app.colors.selected_cell_style_fg);
-
-    // let header_cells = ["Name", "Instance ID", "IP", "Status"]
-    //     .iter()
-    //     .map(|h| Cell::from(*h).style(Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD)));
-
-    // let header = Row::new(header_cells)
-    //     .height(1)
-    //     .bottom_margin(0);
-    // // let header = ["Name", "Instance Id", "IP", "Status"]
-    // //     .into_iter()
-    // //     .map(Cell::from)
-    // //     .map(|h| Cell::from(*h).style(Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD)));
-    // //     // .collect::<Row>()
-    // //     // .style(header_style)
-    // //     // .height(1);
-
-    // let rows = app.items.iter().enumerate().map(|(i, data)| {
-    //     let color = match i % 2 {
-    //         0 => app.colors.normal_row_color,
-    //         _ => app.colors.alt_row_color,
-    //     };
-    //     let item = data.ref_array();
-    //     item.into_iter()
-    //         .map(|content| Cell::from(Text::from(format!("\n{content}\n"))))
-    //         .collect::<Row>()
-    //         .style(Style::new().fg(app.colors.row_fg).bg(color))
-    //         .height(3)
-    // });
-    // //let bar = " █>> ";
-    // let bar = Span::styled(">>", Style::default().fg(Color::Cyan));
-    // let t = Table::new(
-    //     rows,
-    //     [
-    //         // + 1 is for padding.
-    //         Constraint::Length(app.longest_item_lens.0 + 1),
-    //         Constraint::Min(app.longest_item_lens.1),
-    //         Constraint::Min(app.longest_item_lens.2),
-    //         Constraint::Min(app.longest_item_lens.3),
-    //     ],
-    // )
-    // .header(header)
-    // .block(Block::default().borders(Borders::LEFT | Borders::RIGHT | Borders::BOTTOM))
-    // // The selection arrow ">> "
-    // // .row_highlight_style(selected_row_style)
-    // // .column_highlight_style(selected_col_style)
-    // // .cell_highlight_style(selected_cell_style)
-    // .highlight_symbol(Text::from(vec!["".into(), bar.into(), "".into()]))
-    // // .bg(app.colors.buffer_bg)
-
-    // // .highlight_spacing(HighlightSpacing::Always)
-    // ;
-
-    // f.render_stateful_widget(t, layout, &mut app.state);
 }

@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::utils::config::load_config;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
@@ -36,13 +38,15 @@ impl SshKeys {
         let mut keys = Self::get_ssh_private_keys();
         let mut default_key: Option<String> = None;
 
+        let config: Option<Config> = load_config();
+
         // Try to load config from ~/.config/e2s/config.toml
-        if let Some(config) = Self::load_config() {
+        if let Some(config) = config {
             // Add additional keys from config (full paths)
             for key_path in config.keys.additional_keys {
                 // Expand home directory if path starts with ~
                 let expanded_path = Self::expand_home_dir(&key_path);
-                
+
                 // Verify the key file exists and is a private key
                 if let Ok(path) = PathBuf::from(&expanded_path).canonicalize() {
                     if path.is_file() && Self::is_private_key(&path) {
@@ -80,10 +84,7 @@ impl SshKeys {
         // If no default key from config, use first key
         let selected_key = default_key.or_else(|| keys.first().cloned());
 
-        SshKeys {
-            keys,
-            selected_key,
-        }
+        SshKeys { keys, selected_key }
     }
 
     fn expand_home_dir(path: &str) -> String {
@@ -93,25 +94,6 @@ impl SshKeys {
             }
         }
         path.to_string()
-    }
-
-    fn load_config() -> Option<Config> {
-        let config_path = Self::get_config_path()?;
-
-        if !config_path.exists() {
-            return None;
-        }
-
-        let content = fs::read_to_string(config_path).ok()?;
-        toml::from_str(&content).ok()
-    }
-
-    fn get_config_path() -> Option<PathBuf> {
-        let mut path = dirs::home_dir()?;
-        path.push(".config");
-        path.push("e2s");
-        path.push("config.toml");
-        Some(path)
     }
 
     /// Move to the next key (wraps around to the beginning)
@@ -162,34 +144,6 @@ impl SshKeys {
         self.keys.len()
     }
 
-    /// Create a sample config file
-    pub fn create_sample_config() -> std::io::Result<()> {
-        let config_path = Self::get_config_path().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")
-        })?;
-
-        // Create directory if it doesn't exist
-        if let Some(parent) = config_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        let sample_config = Config {
-            keys: KeyConfig {
-                default_key: Some("id_rsa".to_string()),
-                additional_keys: vec![
-                    "/home/user/custom/my_key".to_string(),
-                    "~/Documents/keys/work_key".to_string(),
-                ],
-            },
-        };
-
-        let toml_string = toml::to_string_pretty(&sample_config)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-
-        fs::write(config_path, toml_string)?;
-        Ok(())
-    }
-
     fn get_ssh_private_keys() -> Vec<String> {
         let ssh_dir = match dirs::home_dir() {
             Some(mut path) => {
@@ -225,7 +179,8 @@ impl SshKeys {
                     || filename == "known_hosts"
                     || filename == "config"
                     || filename == "authorized_keys"
-                    || filename.starts_with('.')  // Skip hidden files like .ssh
+                    || filename.starts_with('.')
+                // Skip hidden files like .ssh
                 {
                     continue;
                 }
