@@ -1,4 +1,4 @@
-use std::{io, process::Command};
+use std::{io, process::{Stdio, Command}};
 
 use aws_config::{
     meta::region::RegionProviderChain, profile::ProfileFileRegionProvider, BehaviorVersion, Region,
@@ -642,6 +642,11 @@ impl App {
                     ));
                 }
             };
+
+            command
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
 
             let _ = command.spawn().map(|_| ()).map_err(|e| {
                 eprintln!("Failed to open terminal '{}': {}", emulator, e);

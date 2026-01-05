@@ -30,11 +30,11 @@ pub fn render(_app: &mut App, f: &mut Frame) {
         Line::from(vec![Span::styled("[ General ]", title_style)]),
         Line::from(vec![
             Span::styled("        Ctrl-c: ", key_style),
-            Span::styled("quit", desc_style),
+            Span::styled("Quit", desc_style),
         ]),
         Line::from(vec![
             Span::styled("   j k Down Up: ", key_style),
-            Span::styled("scroll upward/downward", desc_style),
+            Span::styled("Scroll upward/downward", desc_style),
         ]),
         Line::from(vec![
             Span::styled("h l Left Right: ", key_style),
@@ -46,15 +46,15 @@ pub fn render(_app: &mut App, f: &mut Frame) {
         ]),
         Line::from(vec![
             Span::styled("           [/]: ", key_style),
-            Span::styled("enable search mode", desc_style),
+            Span::styled("Enable search mode", desc_style),
         ]),
         Line::from(vec![
-            Span::styled("             s: ", key_style),
+            Span::styled("        s/Enter: ", key_style),
             Span::styled("SSH into selected", desc_style),
         ]),
         Line::from(vec![
             Span::styled("             p: ", key_style),
-            Span::styled("Toggle Private/Public IP", desc_style),
+            Span::styled("Toggle Private/Public/SSM ", desc_style),
         ]),
     ];
 
