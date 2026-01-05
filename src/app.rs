@@ -3,8 +3,8 @@ use clap::Parser;
 use rand::Rng;
 
 use crate::app::{
-    aws::ec2::{ConnectMode, Ec2Client},
-    input::{ssh_keys::SshKeys, ssh_user::SshUsers},
+    aws::ec2::{ConnectMode, ConnectModeConfig, Ec2Client},
+    input::{ssh_keys::SshKeys, ssh_user::SshUsers, terminal::Config as TerminalConfig},
 };
 use input::user_input::{
     InputMode::{self, Editing, Normal},
@@ -20,7 +20,7 @@ pub mod input;
 pub enum SelectedTab {
     List,
     Details,
-} 
+}
 
 // ANCHOR_END: action
 /// A TUI for managing AWS EC2 SSH access
@@ -44,13 +44,15 @@ pub struct App {
     pub show_help: bool,
     pub input_mode: InputMode,
     pub items: Vec<Data>,
+    pub selected_item: Option<Data>,
     pub display_items: Vec<Data>,
     pub state: TableState,
     pub ec2_client: Ec2Client,
     pub ssh_keys: SshKeys,
     pub ssh_user: SshUsers,
-    pub connect_mode: ConnectMode,
-
+    pub mode: ConnectMode,
+    pub terminal: TerminalConfig,
+    pub loading: bool,
 }
 
 // ANCHOR: application_impl
@@ -67,11 +69,14 @@ impl App {
             items: Vec::new(),
             // items: data_vec,
             display_items: Vec::new(),
+            selected_item: None,
             state: TableState::default().with_selected(0),
             ec2_client: Ec2Client::None,
             ssh_keys: SshKeys::load(),
             ssh_user: SshUsers::load(),
-            connect_mode: ConnectMode::Public,
+            terminal: TerminalConfig::load(),
+            mode: ConnectModeConfig::load(),
+            loading: false,
         }
     }
 

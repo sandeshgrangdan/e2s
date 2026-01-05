@@ -10,6 +10,9 @@ pub mod tui;
 pub mod ui;
 pub mod update;
 
+/// Utility functions and helpers.
+pub mod utils;
+
 /// Application updater.
 // ANCHOR_END: declare_mods
 use app::App;

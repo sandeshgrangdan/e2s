@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::PathBuf;
+
+use crate::utils::config::load_config;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -36,8 +36,10 @@ impl SshUsers {
         let mut users = vec!["ec2-user".to_string(), "ubuntu".to_string()];
         let mut default_user: Option<String> = None;
 
+        let config: Option<Config> = load_config();
+
         // Try to load config from ~/.config/ec2/config.toml
-        if let Some(config) = Self::load_config() {
+        if let Some(config) = config {
             // Add additional users from config
             for user in config.users.additional_users {
                 if !users.contains(&user) {
@@ -60,25 +62,6 @@ impl SshUsers {
             users,
             selected_user,
         }
-    }
-
-    fn load_config() -> Option<Config> {
-        let config_path = Self::get_config_path()?;
-
-        if !config_path.exists() {
-            return None;
-        }
-
-        let content = fs::read_to_string(config_path).ok()?;
-        toml::from_str(&content).ok()
-    }
-
-    fn get_config_path() -> Option<PathBuf> {
-        let mut path = dirs::home_dir()?;
-        path.push(".config");
-        path.push("e2s");
-        path.push("config.toml");
-        Some(path)
     }
 
     /// Move to the next user (wraps around to the beginning)
@@ -128,30 +111,4 @@ impl SshUsers {
     pub fn len(&self) -> usize {
         self.users.len()
     }
-
-    /// Create a sample config file
-    pub fn create_sample_config() -> std::io::Result<()> {
-        let config_path = Self::get_config_path().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")
-        })?;
-
-        // Create directory if it doesn't exist
-        if let Some(parent) = config_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        let sample_config = Config {
-            users: UserConfig {
-                default_user: Some("ec2-user".to_string()),
-                additional_users: vec!["admin".to_string(), "root".to_string()],
-            },
-        };
-
-        let toml_string = toml::to_string_pretty(&sample_config)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-
-        fs::write(config_path, toml_string)?;
-        Ok(())
-    }
 }
-

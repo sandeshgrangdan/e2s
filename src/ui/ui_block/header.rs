@@ -1,10 +1,11 @@
 use ratatui::{
     prelude::*,
     style::{Color, Style},
+    text::{Span, Text},
     widgets::{Block, BorderType, Borders, Padding, Paragraph, Wrap},
 };
 
-use crate::app::{App, aws::ec2::ConnectMode};
+use crate::app::{aws::ec2::ConnectMode, App};
 
 pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
     let title_block = Block::default()
@@ -13,7 +14,7 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
         .padding(Padding::new(2, 1, 0, 0))
         .border_type(BorderType::Plain);
 
-    let ssh_from_private = match app.connect_mode {
+    let ssh_from_private = match app.mode {
         ConnectMode::Private => "Private",
         ConnectMode::Public => "Public",
         ConnectMode::Ssm => "SSM",
@@ -27,18 +28,61 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
 
     let user = app.ssh_user.selected_user.as_deref().unwrap_or("ec2-user");
 
-    let title = Paragraph::new(Text::styled(
-        format!(
-            " e2s - EC2 SSH Selector ({}) | Region: {} | SSH Key: {} | User: {}",
-            ssh_from_private, app.args.region, selected_ssh_key, user
+    let mut title_text = vec![
+        Span::styled(
+            "e2s - EC2 SSH Selector (",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
         ),
-        Style::default()
-            .fg(Color::White)
-            .add_modifier(Modifier::BOLD),
-    ))
-    .block(title_block)
-    .style(Style::default().bg(Color::Reset))
-    .alignment(Alignment::Left);
+        Span::styled(
+            ssh_from_private,
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            ") | Region: ",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            &app.args.region,
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            " | SSH Key: ",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            &selected_ssh_key,
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            " | User: ",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::styled(
+            user,
+            Style::default()
+                .fg(Color::Magenta)
+                .add_modifier(Modifier::BOLD),
+        ),
+    ];
+
+    let title = Paragraph::new(Line::from(title_text))
+        .block(title_block)
+        .style(Style::default().bg(Color::Reset))
+        .alignment(Alignment::Left);
 
     f.render_widget(title, layout);
 }
