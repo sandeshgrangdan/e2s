@@ -4,10 +4,10 @@
 A **blazingly fast Terminal User Interface (TUI)** for managing AWS EC2 instances, built with **Rust**.
 Browse, filter, and SSH into your EC2 instances **without leaving the terminal**.
 
-<!-- ![EC2 TUI Demo](./.github/assets/info.png) -->
-<p align="center">
+![EC2 TUI Demo](./.github/assets/e2s.png)
+<!-- <p align="center">
   <img src="./.github/assets/info.png" alt="EC2 TUI Demo" style="max-height:600px; width:auto;">
-</p>
+</p> -->
 
 ---
 
