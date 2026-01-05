@@ -22,7 +22,6 @@ touch ~/.config/e2s/config.toml
 ## Complete Configuration Example
 
 ```toml
-(optional)
 connect_mode = "ssm" # ssm | private | public
  # Connection mode: ssm (AWS SSM), private (private IP SSH), public (public IP SSH)
 
