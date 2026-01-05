@@ -404,19 +404,25 @@ impl App {
 
             let exec_command = format!("{}; exec {}", ssh_command, shell);
 
-            // Detect OS
+            // Detect OS and WSL
             let is_macos = cfg!(target_os = "macos");
+            let is_wsl = std::path::Path::new("/proc/version").exists()
+                && std::fs::read_to_string("/proc/version")
+                    .map(|s| {
+                        s.to_lowercase().contains("microsoft") || s.to_lowercase().contains("wsl")
+                    })
+                    .unwrap_or(false);
 
             let mut command = match emulator.to_lowercase().as_str() {
                 "iterm2" | "iterm" if is_macos => {
                     // macOS iTerm2 - use AppleScript
                     let applescript = format!(
                         r#"tell application "iTerm"
-                                create window with default profile
-                                tell current session of current window
-                                    write text "{}"
-                                end tell
-                            end tell"#,
+                            create window with default profile
+                            tell current session of current window
+                                write text "{}"
+                            end tell
+                        end tell"#,
                         exec_command.replace("\\", "\\\\").replace("\"", "\\\"")
                     );
                     let mut cmd = Command::new("osascript");
@@ -427,9 +433,9 @@ impl App {
                     // macOS Terminal.app
                     let applescript = format!(
                         r#"tell application "Terminal"
-                                do script "{}"
-                                activate
-                            end tell"#,
+                            do script "{}"
+                            activate
+                        end tell"#,
                         exec_command.replace("\\", "\\\\").replace("\"", "\\\"")
                     );
                     let mut cmd = Command::new("osascript");
@@ -448,21 +454,26 @@ impl App {
                             // CLI not available - use AppleScript to control Ghostty
                             let applescript = format!(
                                 r#"tell application "Ghostty"
-                                        activate
-                                    end tell
-                                    delay 0.3
-                                    tell application "System Events"
-                                        keystroke "t" using {{command down}}
-                                        delay 0.2
-                                        keystroke "{}"
-                                        keystroke return
-                                    end tell"#,
+                                    activate
+                                end tell
+                                delay 0.3
+                                tell application "System Events"
+                                    keystroke "t" using {{command down}}
+                                    delay 0.2
+                                    keystroke "{}"
+                                    keystroke return
+                                end tell"#,
                                 exec_command.replace("\\", "\\\\").replace("\"", "\\\"")
                             );
                             let mut cmd = Command::new("osascript");
                             cmd.arg("-e").arg(&applescript);
                             cmd
                         }
+                    } else if is_wsl {
+                        // WSL - use Windows executable
+                        let mut cmd = Command::new("ghostty.exe");
+                        cmd.arg("-e").arg(&shell_name).arg("-c").arg(&exec_command);
+                        cmd
                     } else {
                         // Linux - standard CLI
                         let mut cmd = Command::new("ghostty");
@@ -474,15 +485,15 @@ impl App {
                     // Warp on macOS - limited CLI support
                     let applescript = format!(
                         r#"tell application "Warp"
-                                activate
-                            end tell
-                            delay 0.5
-                            tell application "System Events"
-                                keystroke "t" using {{command down}}
-                                delay 0.2
-                                keystroke "{}"
-                                keystroke return
-                            end tell"#,
+                            activate
+                        end tell
+                        delay 0.5
+                        tell application "System Events"
+                            keystroke "t" using {{command down}}
+                            delay 0.2
+                            keystroke "{}"
+                            keystroke return
+                        end tell"#,
                         exec_command.replace("\\", "\\\\").replace("\"", "\\\"")
                     );
                     let mut cmd = Command::new("osascript");
@@ -490,25 +501,57 @@ impl App {
                     cmd
                 }
                 "alacritty" => {
-                    // Works the same on both macOS and Linux
-                    let mut cmd = Command::new("alacritty");
-                    cmd.arg("-e").arg(&shell_name).arg("-c").arg(&exec_command);
-                    cmd
+                    if is_wsl {
+                        let mut cmd = Command::new("alacritty.exe");
+                        cmd.arg("-e").arg(&shell_name).arg("-c").arg(&exec_command);
+                        cmd
+                    } else {
+                        let mut cmd = Command::new("alacritty");
+                        cmd.arg("-e").arg(&shell_name).arg("-c").arg(&exec_command);
+                        cmd
+                    }
                 }
                 "kitty" => {
-                    // Works the same on both macOS and Linux
-                    let mut cmd = Command::new("kitty");
-                    cmd.arg(&shell_name).arg("-c").arg(&exec_command);
-                    cmd
+                    if is_wsl {
+                        let mut cmd = Command::new("kitty.exe");
+                        cmd.arg(&shell_name).arg("-c").arg(&exec_command);
+                        cmd
+                    } else {
+                        let mut cmd = Command::new("kitty");
+                        cmd.arg(&shell_name).arg("-c").arg(&exec_command);
+                        cmd
+                    }
                 }
                 "wezterm" => {
-                    // Works the same on both macOS and Linux
-                    let mut cmd = Command::new("wezterm");
-                    cmd.arg("start")
-                        .arg(&shell_name)
-                        .arg("-c")
-                        .arg(&exec_command);
-                    cmd
+                    if is_wsl {
+                        // WSL - call Windows wezterm.exe
+                        let mut cmd = Command::new("wezterm.exe");
+                        cmd.arg("start")
+                            .arg("--cwd")
+                            .arg(".")
+                            .arg("--")
+                            .arg("wsl.exe")
+                            .arg("-e")
+                            .arg(&shell_name)
+                            .arg("-c")
+                            .arg(&exec_command);
+                        cmd
+                    } else if is_macos || cfg!(target_os = "linux") {
+                        // macOS and Linux
+                        let mut cmd = Command::new("wezterm");
+                        cmd.arg("start")
+                            .arg(&shell_name)
+                            .arg("-c")
+                            .arg(&exec_command);
+                        cmd
+                    } else {
+                        let mut cmd = Command::new("wezterm");
+                        cmd.arg("start")
+                            .arg(&shell_name)
+                            .arg("-c")
+                            .arg(&exec_command);
+                        cmd
+                    }
                 }
                 "hyper" => {
                     if is_macos {
@@ -577,6 +620,19 @@ impl App {
                     // Wayland terminal (Linux)
                     let mut cmd = Command::new("foot");
                     cmd.arg(&shell_name).arg("-c").arg(&exec_command);
+                    cmd
+                }
+                "windows-terminal" | "wt" if is_wsl => {
+                    // Windows Terminal from WSL
+                    let mut cmd = Command::new("wt.exe");
+                    cmd.arg("--")
+                        .arg("wsl.exe")
+                        .arg("~")
+                        .arg("-e")
+                        .arg(&shell_name)
+                        .arg("-l")
+                        .arg("-c")
+                        .arg(&ssh_command);
                     cmd
                 }
                 _ => {

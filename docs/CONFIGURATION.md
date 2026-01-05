@@ -2,13 +2,13 @@
 
 This guide covers all configuration options available in e2s.
 
-## 📍 Configuration File Location
+## Configuration File Location
 
 The configuration file is located at:
 - **Linux/macOS:** `~/.config/e2s/config.toml`
 - **Windows:** `%APPDATA%\e2s\config.toml`
 
-## 🎯 Quick Start
+## Quick Start
 
 e2s works without any configuration using sensible defaults. Create a config file only if you want to customize behavior.
 
@@ -19,9 +19,13 @@ mkdir -p ~/.config/e2s
 touch ~/.config/e2s/config.toml
 ```
 
-## 📋 Complete Configuration Example
+## Complete Configuration Example
 
 ```toml
+(optional)
+connect_mode = "ssm" # ssm | private | public
+ # Connection mode: ssm (AWS SSM), private (private IP SSH), public (public IP SSH)
+
 [users]
 # Default user - will be auto-selected when app starts
 # If not specified, the first user in the list will be selected
@@ -65,9 +69,16 @@ additional_keys = [
 emulator = "alacritty"
 ```
 
-## 🔑 Configuration Sections
+## Configuration Sections
 
-### `[users]` - SSH User Configuration
+### `connect_mode` (optional) – Method used to connect to instances
+* **Available options:**
+
+  * `ssm` – Connect using AWS Systems Manager (recommended; works for private and public instances)
+  * `private` – Connect via SSH using the private IP (**default**)
+  * `public` – Connect via SSH using the public IP   
+
+### `[users]` (optional) - SSH User Configuration
 
 Controls which SSH users are available for connecting to instances.
 
@@ -105,7 +116,7 @@ additional_users = ["ec2-user", "ubuntu", "admin"]
 | SUSE/openSUSE | `ec2-user` |
 | Bitnami | `bitnami` |
 
-### `[keys]` - SSH Key Configuration
+### `[keys]` (optional) - SSH Key Configuration
 
 Manages SSH private keys used for authentication.
 
@@ -196,7 +207,7 @@ emulator = "iterm2"
 
 **Note:** If you don't specify a terminal emulator, SSH sessions will run in the same terminal as the TUI, and you'll return to the TUI after disconnecting.
 
-## 📝 Configuration Examples
+## Configuration Examples
 
 ### Example 1: AWS Multi-Environment Setup
 
@@ -340,7 +351,7 @@ To change your default region permanently:
 aws configure set region us-east-1
 ```
 
-## 📚 Related Documentation
+#📚 Related Documentation
 
 - [AWS EC2 SSH Best Practices](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
 - [SSH Key Permissions Guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connection-prereqs.html)

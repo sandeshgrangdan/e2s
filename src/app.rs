@@ -52,6 +52,7 @@ pub struct App {
     pub ssh_user: SshUsers,
     pub mode: ConnectMode,
     pub terminal: TerminalConfig,
+    pub loading: bool,
 }
 
 // ANCHOR: application_impl
@@ -75,6 +76,7 @@ impl App {
             ssh_user: SshUsers::load(),
             terminal: TerminalConfig::load(),
             mode: ConnectModeConfig::load(),
+            loading: false,
         }
     }
 

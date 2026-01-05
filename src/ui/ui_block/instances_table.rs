@@ -12,7 +12,12 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
         .map(|item| item.name.clone())
         .unwrap_or_else(|| String::from("None"));
 
-    let title = if app.search.1.input.is_empty() {
+    let title = if app.loading {
+        Line::from(vec![Span::styled(
+            "Loading ",
+            Style::default().fg(Color::Rgb(135, 206, 250)).bold(),
+        )])
+    } else if app.search.1.input.is_empty() {
         Line::from(vec![
             Span::styled("╭─ ", Style::default().fg(Color::Rgb(100, 149, 237))),
             Span::styled(

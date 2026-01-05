@@ -34,7 +34,7 @@ Before using e2s, ensure you have:
 3. **Network Access** - Security groups allowing SSH access (port 22) to your instances
 4. **Permissions** - AWS IAM permissions to describe EC2 instances
 
-## 🎯 Quick Start
+## Quick Start
 
 Launch the TUI with a single command:
 
@@ -77,7 +77,7 @@ e2s --help
 4. **Filter** - Start typing to search/filter instances by name or ID
 5. **Quit** - Press `q` or `Esc` to exit and return to your terminal
 
-## ⚙️ Configuration
+## Configuration
 
 e2s works out of the box with sensible defaults, but you can customize its behavior through a configuration file.
 
@@ -99,7 +99,7 @@ default_key = "my-key.pem"
 emulator = "alacritty"
 ```
 
-## 🗺️ Common SSH Users by Distribution
+## Common SSH Users by Distribution
 
 | Distribution | Default SSH User |
 |--------------|------------------|
@@ -114,7 +114,7 @@ emulator = "alacritty"
 | SUSE/openSUSE | `ec2-user` |
 | Bitnami AMIs | `bitnami` |
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Connection Issues
 
@@ -139,11 +139,11 @@ emulator = "alacritty"
 - Review your AWS credentials: `aws ec2 describe-instances`
 - Verify SSH key permissions: `ls -la ~/.ssh/`
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📝 License
+## License
 
 [Add your license here]
 

@@ -4,25 +4,28 @@
 A **blazingly fast Terminal User Interface (TUI)** for managing AWS EC2 instances, built with **Rust**.
 Browse, filter, and SSH into your EC2 instances **without leaving the terminal**.
 
-![EC2 TUI Demo](./.github/assets/info.png)
+<!-- ![EC2 TUI Demo](./.github/assets/info.png) -->
+<p align="center">
+  <img src="./.github/assets/info.png" alt="EC2 TUI Demo" style="max-height:600px; width:auto;">
+</p>
 
 ---
 
-## ✨ Features
+## Features
 
-* 📋 **Interactive EC2 Dashboard**
+* **Interactive EC2 Dashboard**
   Instantly list and navigate all your EC2 instances in a clean, responsive TUI.
 
-* 🔐 **One-Keystroke SSH Access**
+* **One-Keystroke SSH Access**
   SSH into instances using your existing local SSH keys—no copy-pasting needed.
 
-* 👤 **Multi-User SSH Profiles**
+* **Multi-User SSH Profiles**
   Easily configure multiple SSH users (e.g. `ec2-user`, `ubuntu`, `admin`) for different AMIs.
 
-* ⚙️ **TOML-Based Configuration**
+* **TOML-Based Configuration**
   Simple, readable configuration with sensible defaults.
 
-* ⚡ **Fast & Lightweight**
+* **Fast & Lightweight**
   Written in Rust for high performance, low memory usage, and instant startup.
 
 ---
@@ -31,7 +34,7 @@ Browse, filter, and SSH into your EC2 instances **without leaving the terminal**
 
 Get **e2s** up and running in minutes and start connecting to your EC2 instances effortlessly.
 
-📘 **Guides**
+**Guides**
 - 👉 **[Installation & Usage Guide](https://github.com/sandeshgrangdan/e2s/blob/main/docs/USAGES.md)**  
   Learn how to install, run, and use `e2s` effectively.
 - 👉 **[Configuration Guide](https://github.com/sandeshgrangdan/e2s/blob/main/docs/CONFIGURATION.md)**  

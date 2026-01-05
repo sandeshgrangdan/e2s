@@ -29,7 +29,9 @@ pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
                 app.quit();
             }
             KeyCode::Char('r') | KeyCode::Char('R') => {
+                app.loading = true;
                 app.fetch_ec2_data().await;
+                app.loading = false;
             }
             KeyCode::Down | KeyCode::Char('j') => {
                 app.ec2_next();

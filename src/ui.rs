@@ -42,7 +42,11 @@ pub fn render(app: &mut App, f: &mut Frame) {
     if app.display_items.is_empty() {
         ui_block::welcome::render(app, f, table_layout[0]);
     } else {
-        ui_block::instances_table::render(app, f, table_layout[0]);
+        if app.loading {
+            ui_block::loader::render(app, f, table_layout[0]);
+        } else {
+            ui_block::instances_table::render(app, f, table_layout[0]);
+        }
     }
     ui_block::footer::render(app, f, main_layout[2]);
 
