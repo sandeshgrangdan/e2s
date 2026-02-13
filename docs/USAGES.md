@@ -7,13 +7,13 @@ This document focuses on installation and configuration to help you get started 
 ### Linux & macOS
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.4/e2s-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.5/e2s-installer.sh | sh
 ```
 
 ### Windows
 
 ```powershell
-powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.4/e2s-installer.ps1 | iex"
+powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.5/e2s-installer.ps1 | iex"
 ```
 
 ### Cargo
