@@ -14,6 +14,7 @@ use ratatui::widgets::TableState;
 
 // Public mod
 pub mod aws;
+pub mod connect;
 pub mod input;
 
 #[derive(Parser, Debug, Clone)]
@@ -42,6 +43,8 @@ pub struct App {
     pub search: (bool, UserInput),
     pub args: Args,
     pub show_help: bool,
+    /// Details popup of the selected instance (`d`).
+    pub show_details: bool,
     pub input_mode: InputMode,
     pub items: Vec<Data>,
     pub selected_item: Option<Data>,
@@ -53,6 +56,20 @@ pub struct App {
     pub mode: ConnectMode,
     pub terminal: TerminalConfig,
     pub loading: bool,
+    /// One-line notice shown in place of the key hints until the next key
+    /// press, e.g. why a connection could not be started.
+    pub message: Option<String>,
+}
+
+/// Why the config file, or a part of it, is being ignored - if it is.
+fn config_problem() -> Option<String> {
+    use crate::utils::config::config_problem as problem;
+
+    problem::<TerminalConfig>()
+        .or_else(problem::<input::ssh_keys::Config>)
+        .or_else(problem::<input::ssh_user::Config>)
+        .or_else(problem::<aws::ec2::ConnectModeConfig>)
+        .or_else(problem::<input::ad::Config>)
 }
 
 // ANCHOR: application_impl
@@ -66,6 +83,7 @@ impl App {
             input_mode: InputMode::Normal,
             args,
             show_help: false,
+            show_details: false,
             items: Vec::new(),
             // items: data_vec,
             display_items: Vec::new(),
@@ -77,6 +95,7 @@ impl App {
             terminal: TerminalConfig::load(),
             mode: ConnectModeConfig::load(),
             loading: false,
+            message: config_problem(),
         }
     }
 

@@ -28,6 +28,14 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
 
     let user = app.ssh_user.selected_user.as_deref().unwrap_or("ec2-user");
 
+    // With the Active Directory account selected the login uses its password,
+    // not an SSH key.
+    let (auth_label, auth_value) = match app.ssh_user.selected_ad() {
+        Some(ad) if ad.has_password => (" | Auth: ", "AD password (saved)".to_string()),
+        Some(_) => (" | Auth: ", "AD password (ask)".to_string()),
+        None => (" | SSH Key: ", selected_ssh_key),
+    };
+
     let mut title_text = vec![
         Span::styled(
             "e2s - EC2 SSH Selector (",
@@ -54,13 +62,13 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
-            " | SSH Key: ",
+            auth_label,
             Style::default()
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
         ),
         Span::styled(
-            &selected_ssh_key,
+            auth_value,
             Style::default()
                 .fg(Color::Green)
                 .add_modifier(Modifier::BOLD),

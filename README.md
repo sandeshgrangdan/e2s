@@ -22,6 +22,12 @@ Browse, filter, and SSH into your EC2 instances **without leaving the terminal**
 * **Multi-User SSH Profiles**
   Easily configure multiple SSH users (e.g. `ec2-user`, `ubuntu`, `admin`) for different AMIs.
 
+* **Active Directory Login**
+  Log in to domain-joined servers with your AD account (`ssh -l user@domain <ip>`), with the password filled in for you. Press `a` to switch.
+
+* **SSM Sessions & New Terminal Windows**
+  Connect over the private IP, the public IP or AWS SSM, in the same terminal or in a new window of your terminal emulator.
+
 * **TOML-Based Configuration**
   Simple, readable configuration with sensible defaults.
 
@@ -38,7 +44,7 @@ Get **e2s** up and running in minutes and start connecting to your EC2 instances
 - 👉 **[Installation & Usage Guide](https://github.com/sandeshgrangdan/e2s/blob/main/docs/USAGES.md)**  
   Learn how to install, run, and use `e2s` effectively.
 - 👉 **[Configuration Guide](https://github.com/sandeshgrangdan/e2s/blob/main/docs/CONFIGURATION.md)**  
-  Customize SSH users, keys, terminal preferences, and more.
+  Customize SSH users, keys, Active Directory login, terminal preferences, and more.
 
 > ⚠️ **Before you start:**  
 > Ensure your **AWS credentials** and **SSH keys** are properly configured.

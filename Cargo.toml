@@ -1,6 +1,6 @@
 [package]
 name = "e2s"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 
 # Github Repo
@@ -35,7 +35,11 @@ serde = { version = "1.0.228", features = ["derive"] }
 toml = "0.8"
 time = "0.3.36"
 tokio = { version = "1.35.1", features = ["full"] }
+rpassword = "7.5.5"
 unicode-width = "=0.2.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

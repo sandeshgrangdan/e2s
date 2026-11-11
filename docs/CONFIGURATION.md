@@ -66,6 +66,13 @@ additional_keys = [
 # Specify which terminal emulator to use
 # If not specified, uses same TUI terminal
 emulator = "alacritty"
+
+[ad]
+# Optional: log in with an Active Directory account and its password
+# instead of an SSH key (press `a` in e2s to switch to it)
+username = "jane.doe@corp.example.local"
+# Optional: let e2s type the password for you (see the [ad] section below)
+password = 'your-ad-password'
 ```
 
 ## Configuration Sections
@@ -156,6 +163,93 @@ additional_keys = [
 - Supported formats: PEM, OpenSSH
 - Both RSA and Ed25519 keys are supported
 
+### `[ad]` (optional) - Active Directory Login
+
+Logs in with a domain account and its **password** instead of an SSH key - the
+same as running:
+
+```bash
+ssh -l jane.doe@corp.example.local 10.0.1.25
+```
+
+```toml
+[ad]
+username = "jane.doe@corp.example.local"
+password = 'your-ad-password'   # optional
+```
+
+#### `username`
+- **Type:** String
+- **Description:** The login name, exactly as you would give it to `ssh -l`.
+  Use the `user@domain` form. (`DOMAIN\user` is refused by current OpenSSH
+  clients: "remote username contains invalid characters".)
+
+#### `password`
+- **Type:** String
+- **Default:** Not set - `ssh` asks for the password every time
+- **Description:** If set, e2s answers the server's password question for you.
+
+Write the password between **single quotes**. Inside single quotes TOML takes
+every character literally, so backslashes and double quotes need no escaping:
+
+```toml
+password = 'p@ss\w"rd'          # single quotes: taken as written
+password = '''it's-a-secret'''    # contains a single quote: use three
+```
+
+If the config file cannot be parsed (for example an unescaped `\` inside
+double quotes), e2s shows `Config error at line N ...` at the bottom of the
+screen and uses its defaults.
+
+#### Using it
+
+- Press **`a`** to switch to the AD account, and `a` again to go back to the
+  previous user. The account is also part of the user list (`n` / `m`).
+- The header shows `Auth: AD password (saved)` - or `(ask)` when no password is
+  configured - in place of the SSH key, which is not used for this login.
+- Press `Enter` to connect. `p` still chooses between the private and the
+  public IP. (SSM sessions do not use SSH users at all.)
+- To start e2s with the AD account selected:
+
+  ```toml
+  [users]
+  default_user = "jane.doe@corp.example.local"   # same value as [ad] username
+  ```
+
+#### What e2s does with the password
+
+The password stays in the config file. It is never put on a command line or
+into an environment variable; `ssh` asks e2s for it at the moment the server
+asks (OpenSSH's `SSH_ASKPASS` mechanism).
+
+To keep the account from being **locked out** by repeated failures, and the
+password from going anywhere unintended, e2s is deliberately conservative:
+
+- It only answers the password question of *that login on that host*. Anything
+  else is shown to you to answer yourself: the "unknown host key" question,
+  one-time codes (MFA), an expired-password dialogue, a jump host's password.
+- It sends the saved password **once per connection**. If the server refuses
+  it, you are asked to type it.
+- After a refusal the saved password is **not sent again for 30 minutes**, or
+  until you edit the config file, whichever comes first. During that time
+  `ssh` simply asks you.
+
+#### Requirements and notes
+
+- **OpenSSH 8.4 or newer** on your machine for the automatic password
+  (`ssh -V`). With an older client `ssh` just asks for the password as usual.
+- The password is stored **in plain text**. Protect the file, and prefer not
+  setting `password` at all on shared machines:
+
+  ```bash
+  chmod 600 ~/.config/e2s/config.toml
+  ```
+- The password is sent to whichever instance you select. Only use the AD
+  login with servers that are joined to your domain, and do not accept host
+  keys you do not expect.
+- The server must allow password logins (`PasswordAuthentication` or
+  `KbdInteractiveAuthentication` in its `sshd_config`).
+
 ### `[terminal]` - Terminal Emulator Configuration
 
 Specifies which terminal emulator to use for SSH connections.
@@ -184,6 +278,8 @@ emulator = "iterm2"
 - SSH sessions launch in a new terminal window
 - The TUI remains open in the original terminal
 - Each connection opens a separate window
+- When the session ends the window stays open with your shell, so that any
+  error message remains readable
 - **Best for:** Multiple simultaneous connections, keeping TUI visible
 
 #### Supported Terminal Emulators
@@ -191,20 +287,33 @@ emulator = "iterm2"
 | Terminal | Platform | Description |
 |----------|----------|-------------|
 | `ghostty` | Linux, macOS | Modern, fast GPU-accelerated terminal |
-| `alacritty` | All | GPU-accelerated, cross-platform |
+| `alacritty` | Linux, macOS, Windows, WSL | GPU-accelerated, cross-platform |
 | `kitty` | Linux, macOS | GPU-accelerated with advanced features |
-| `wezterm` | All | GPU-accelerated with multiplexing |
+| `wezterm` | Linux, macOS, Windows, WSL | GPU-accelerated with multiplexing |
+| `rio` | Linux, macOS, Windows, WSL | GPU-accelerated, written in Rust |
+| `wt` (or `windows-terminal`) | Windows, WSL | Windows Terminal |
 | `gnome-terminal` | Linux | GNOME desktop default |
 | `konsole` | Linux | KDE desktop default |
 | `terminator` | Linux | Multiple terminals in one window |
 | `tilix` | Linux | Tiling terminal emulator |
-| `xterm` | Linux | Classic, lightweight |
+| `xterm`, `urxvt`, `st` | Linux | Classic, lightweight |
 | `foot` | Linux | Lightweight Wayland terminal |
-| `rio` | All | GPU-accelerated, written in Rust |
 | `iterm2` | macOS | Feature-rich macOS terminal |
-| `terminal.app` | macOS | macOS default terminal |
+| `terminal` (or `terminal.app`) | macOS | macOS default terminal |
+| `warp` | macOS | Warp (needs Accessibility permission) |
 
 **Note:** If you don't specify a terminal emulator, SSH sessions will run in the same terminal as the TUI, and you'll return to the TUI after disconnecting.
+
+**WSL:** for `alacritty`, `wezterm` and `rio` e2s uses the Windows program
+(`alacritty.exe`, ...) when it is on your `PATH`, and otherwise the Linux one
+installed inside WSL. `wt` always is the Windows program.
+
+**How the new window is started:** the terminal is asked to run e2s itself
+(`e2s __connect ...`), which then starts `ssh` or `aws` with exactly the
+right arguments. Terminals differ in how they pass a command along, and
+handing them the `ssh` command line directly is what made some of them
+(Alacritty on Windows/WSL, Ghostty before 1.2) show the `ssh` usage text
+instead of connecting in e2s 0.1.5 and earlier.
 
 ## Configuration Examples
 
@@ -288,6 +397,29 @@ This configuration:
 - Keeps the TUI visible in the original terminal
 - Allows multiple simultaneous connections
 
+### Example 6: Active Directory Login in a New Window (WSL)
+
+```toml
+connect_mode = "private"
+
+[users]
+# Start with the AD account selected
+default_user = "jane.doe@corp.example.local"
+
+[ad]
+username = "jane.doe@corp.example.local"
+password = 'your-ad-password'
+
+[terminal]
+emulator = "wezterm"
+```
+
+This configuration:
+- Connects with `ssh -l jane.doe@corp.example.local <private ip>`
+- Types the AD password for you
+- Opens each session in a new WezTerm window
+- `a` switches to key-based logins (`ec2-user`, `ubuntu`, ...) and back
+
 ## 🔍 Troubleshooting Configuration
 
 ### Config File Not Found
@@ -308,9 +440,33 @@ chmod 400 ~/.ssh/your-key.pem
 1. If no terminal is configured, SSH runs in the same window (this is expected behavior)
 2. To use a separate terminal window, add the `[terminal]` section to your config
 3. If a terminal is configured but not launching:
+   - Read the red message at the bottom of the e2s screen - it says what could
+     not be started (for example an unknown terminal name)
    - Verify the terminal is installed: `which kitty`
    - Check the terminal is in your system's PATH
    - Try a different terminal emulator
+
+### New Window Shows the `ssh` Usage Text
+```
+usage: ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] ...
+```
+This happened with some terminals (Alacritty on Windows/WSL, Ghostty before
+1.2) in e2s 0.1.5 and earlier. Update e2s.
+
+### Active Directory Login
+- **`a` says "No Active Directory account"** - there is no `[ad]` section with
+  a `username`, or the config file has a syntax error (see the message shown
+  when e2s starts).
+- **The password is not typed for you** - check `ssh -V` (8.4 or newer is
+  needed); or the saved password was refused in the last 30 minutes (e2s says
+  so) - correct it in the config file.
+- **`Permission denied`** - the password is wrong, the account is locked or
+  expired, or the account is not allowed to log in to that server. Try the
+  same login by hand: `ssh -l jane.doe@corp.example.local <ip>`.
+- **`remote username contains invalid characters`** - use `user@domain`
+  instead of `DOMAIN\user`.
+- **Asked "Are you sure you want to continue connecting"** - normal the first
+  time you connect to a host; answer it as you would for `ssh`.
 
 ## 🔧 Advanced Tips
 

@@ -1,3 +1,4 @@
+pub mod ad;
 pub mod ssh_keys;
 pub mod ssh_user;
 pub mod terminal;

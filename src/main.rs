@@ -15,6 +15,7 @@ pub mod utils;
 
 /// Application updater.
 // ANCHOR_END: declare_mods
+use app::connect::{self, askpass};
 use app::App;
 use clap::Parser;
 use color_eyre::Result;
@@ -27,8 +28,27 @@ use update::update;
 // ANCHOR_END: imports_main
 
 // ANCHOR: main
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
+    // ssh started e2s to answer one of its questions: see `app::connect::askpass`.
+    if askpass::requested() {
+        std::process::exit(askpass::run());
+    }
+
+    // A new terminal window started e2s to run one connection: see `app::connect`.
+    let mut args = std::env::args_os().skip(1);
+    if args.next().is_some_and(|arg| arg == connect::SUBCOMMAND) {
+        let tokens: Vec<String> = args.map(|arg| arg.to_string_lossy().into_owned()).collect();
+        std::process::exit(connect::trampoline(tokens));
+    }
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(run())
+}
+
+/// The terminal user interface.
+async fn run() -> Result<()> {
     // use std::time::Instant;
     // Create an application.
     let mut app = App::new(app::Args::parse());

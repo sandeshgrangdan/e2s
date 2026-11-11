@@ -50,6 +50,10 @@ pub fn render(app: &mut App, f: &mut Frame) {
         ui_block::search::render_search(app, f, main_app_layout[0]);
     }
 
+    if app.show_details {
+        ui_block::details::render(app, f);
+    }
+
     if app.show_help {
         ui_block::help::render(app, f);
     }

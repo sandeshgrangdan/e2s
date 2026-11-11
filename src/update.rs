@@ -1,19 +1,30 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 
+use crate::app::connect::{self, launcher};
 use crate::app::input::user_input::InputMode;
 use crate::app::App;
 use crate::tui::Tui;
 
+/// Connects to the selected instance: in a new terminal window if one is
+/// configured, otherwise in this terminal with the TUI suspended.
 async fn handle_ssh(app: &mut App, tui: &mut Tui) {
+    let spec = match app.connect_spec() {
+        Ok(spec) => spec,
+        Err(message) => {
+            app.message = Some(message);
+            return;
+        }
+    };
+
     if let Some(emulator) = &app.terminal.terminal.emulator {
-        if let Err(e) = app.ssh_in_new_window(emulator).await {
-            eprintln!("Error SSH to the server on new terminal: {}", e);
+        if let Err(e) = launcher::open(emulator, &spec) {
+            app.message = Some(format!("Cannot open a new terminal window: {e}"));
         }
     } else {
         let _ = tui.init_ec2_ssh();
 
-        if let Err(e) = app.ssh().await {
-            eprintln!("Error SSH to the server: {}", e);
+        if let Err(e) = connect::run(&spec) {
+            app.message = Some(format!("Cannot start the session: {e}"));
         }
 
         let _ = tui.exit_ec2_ssh();
@@ -21,6 +32,13 @@ async fn handle_ssh(app: &mut App, tui: &mut Tui) {
 }
 
 pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
+    // Windows reports a key twice: when it is pressed and when it is released.
+    if key_event.kind == KeyEventKind::Release {
+        return;
+    }
+    // A notice stays until the next key press.
+    app.message = None;
+
     match app.input_mode {
         InputMode::Normal => match key_event.code {
             KeyCode::Char('c') | KeyCode::Char('C')
@@ -32,6 +50,10 @@ pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
                 if app.show_help {
                     app.show_help = !app.show_help
                 }
+                app.show_details = false;
+            }
+            KeyCode::Char('d') | KeyCode::Char('D') => {
+                app.show_details = !app.show_details;
             }
             KeyCode::Char('r') | KeyCode::Char('R') => {
                 app.loading = true;
@@ -61,6 +83,9 @@ pub async fn update(app: &mut App, key_event: KeyEvent, tui: &mut Tui) {
             }
             KeyCode::Char('p') => {
                 app.mode.toggle();
+            }
+            KeyCode::Char('a') | KeyCode::Char('A') => {
+                app.toggle_ad_login();
             }
             KeyCode::Char('?') => {
                 app.show_help = !app.show_help;

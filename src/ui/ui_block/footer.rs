@@ -6,7 +6,20 @@ use ratatui::{
 };
 
 pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
-    let footer_text = Line::from(vec![
+    // A notice (e.g. why a connection could not be started) takes the place
+    // of the key hints until the next key press.
+    if let Some(message) = &app.message {
+        let notice = Paragraph::new(Line::from(Span::styled(
+            message.as_str(),
+            Style::default()
+                .fg(Color::LightRed)
+                .add_modifier(Modifier::BOLD),
+        )));
+        f.render_widget(notice, layout);
+        return;
+    }
+
+    let mut hints = vec![
         Span::styled(
             "[s/Enter]->",
             Style::default()
@@ -115,6 +128,33 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
                 .fg(Color::White)
                 .add_modifier(Modifier::BOLD),
         ),
+    ];
+
+    // Only offered when an [ad] account is configured.
+    if app.ssh_user.ad.is_some() {
+        hints.extend([
+            Span::styled(
+                "[a]",
+                Style::default()
+                    .fg(Color::LightCyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                " AD ",
+                Style::default()
+                    .fg(Color::LightCyan)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "| ",
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ]);
+    }
+
+    hints.extend([
         Span::styled(
             "[Ctrl-c]",
             Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
@@ -125,7 +165,7 @@ pub fn render(app: &mut App, f: &mut Frame, layout: Rect) {
         ),
     ]);
 
-    let footer = Paragraph::new(footer_text).alignment(Alignment::Left);
+    let footer = Paragraph::new(Line::from(hints)).alignment(Alignment::Left);
 
     f.render_widget(footer, layout);
 }

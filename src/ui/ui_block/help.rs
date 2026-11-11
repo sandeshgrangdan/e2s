@@ -45,6 +45,14 @@ pub fn render(_app: &mut App, f: &mut Frame) {
             Span::styled("Switch SSH user", desc_style),
         ]),
         Line::from(vec![
+            Span::styled("             a: ", key_style),
+            Span::styled("Switch to/from the Active Directory login", desc_style),
+        ]),
+        Line::from(vec![
+            Span::styled("             d: ", key_style),
+            Span::styled("Show details of the selected instance", desc_style),
+        ]),
+        Line::from(vec![
             Span::styled("           [/]: ", key_style),
             Span::styled("Enable search mode", desc_style),
         ]),

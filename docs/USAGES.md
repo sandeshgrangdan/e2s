@@ -7,13 +7,13 @@ This document focuses on installation and configuration to help you get started 
 ### Linux & macOS
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.5/e2s-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.6/e2s-installer.sh | sh
 ```
 
 ### Windows
 
 ```powershell
-powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.5/e2s-installer.ps1 | iex"
+powershell -c "irm https://github.com/sandeshgrangdan/e2s/releases/download/v0.1.6/e2s-installer.ps1 | iex"
 ```
 
 ### Cargo
@@ -27,6 +27,7 @@ cargo install e2s
 Before using e2s, ensure you have:
 
 1. **SSH Keys** - Your SSH private keys configured in the `~/.ssh/` directory
+   (or an Active Directory account, see [Active Directory Login](#active-directory-login))
 2. **AWS Credentials** - Valid AWS credentials configured via:
    - AWS CLI (`aws configure`)
    - Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
@@ -74,8 +75,27 @@ e2s --help
 1. **Launch** - Run `e2s` to see EC2 instances in your default region
 2. **Navigate** - Use arrow keys (↑/↓) to move through the instance list
 3. **Connect** - Press `Enter` to SSH into the selected instance
-4. **Filter** - Start typing to search/filter instances by name or ID
-5. **Quit** - Press `q` or `Esc` to exit and return to your terminal
+4. **Filter** - Press `/` and type to search/filter instances by name, ID or IP
+5. **Quit** - Press `Ctrl-c` to exit and return to your terminal
+
+### Keys
+
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` or `k` / `j` | Move through the instance list |
+| `Enter` or `s` | Connect to the selected instance |
+| `p` | Switch mode: private IP / SSM / public IP |
+| `n` / `m` | Next / previous SSH user |
+| `←` / `→` or `h` / `l` | Previous / next SSH key |
+| `a` | Switch to the Active Directory login and back (needs an `[ad]` section) |
+| `d` | Show details of the selected instance (type, IAM profile, VPC, security groups, tags, ...) |
+| `/` | Filter the list (`Enter` or `Esc` to leave the filter) |
+| `r` | Reload the instance list |
+| `?` | Show help |
+| `Ctrl-c` | Quit |
+
+If something cannot be started (no key, unknown terminal, ...), the reason is
+shown in red on the bottom line until the next key press.
 
 ## Configuration
 
@@ -98,6 +118,33 @@ default_key = "my-key.pem"
 [terminal]
 emulator = "alacritty"
 ```
+
+## Active Directory Login
+
+Servers joined to a domain can be reached with a domain account and its
+password instead of an SSH key - what you would otherwise type as
+`ssh -l jane.doe@corp.example.local 10.0.1.25`.
+
+1. Add the account to `~/.config/e2s/config.toml`:
+
+   ```toml
+   [ad]
+   username = "jane.doe@corp.example.local"
+   password = 'your-ad-password'   # optional - leave it out to be asked each time
+   ```
+
+   Keep the password in **single quotes**, and the file private:
+   `chmod 600 ~/.config/e2s/config.toml`.
+
+2. Start `e2s`, select an instance and press **`a`**. The header changes to
+   `Auth: AD password (saved)` and `User: jane.doe@corp.example.local`.
+
+3. Press `Enter`. e2s runs `ssh -l jane.doe@corp.example.local <ip>` and
+   answers the password question for you. Anything else `ssh` asks - an
+   unknown host key, a one-time code - is shown for you to answer.
+
+Press `a` again to go back to key-based logins. Details, safety notes and
+troubleshooting: [Configuration Guide - `[ad]`](https://github.com/sandeshgrangdan/e2s/blob/main/docs/CONFIGURATION.md#ad-optional---active-directory-login).
 
 ## Common SSH Users by Distribution
 
@@ -127,6 +174,12 @@ emulator = "alacritty"
 - Verify security group allows SSH (port 22) from your IP
 - Check that the instance is in a running state
 - Ensure the instance has a public IP or you're on the same VPC
+
+**Problem:** The new terminal window only shows the `ssh` usage text
+- This affected some terminals (for example Alacritty on Windows/WSL) in e2s 0.1.5 and earlier - update e2s
+
+**Problem:** Active Directory login is refused or the password is not filled in
+- See the [Active Directory troubleshooting](https://github.com/sandeshgrangdan/e2s/blob/main/docs/CONFIGURATION.md#active-directory-login) section of the configuration guide
 
 **Problem:** "No instances found"
 - Verify AWS credentials are configured correctly
