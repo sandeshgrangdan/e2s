@@ -19,3 +19,9 @@ unix-archive = ".tar.gz"
 install-path = "CARGO_HOME"
 # Whether to install an updater program
 install-updater = true
+
+# GitHub runners to build on. dist 0.30.3 defaults to macos-13 / macos-14 for
+# the Apple targets, which GitHub no longer provides.
+[dist.github-custom-runners]
+aarch64-apple-darwin = "macos-15"
+x86_64-apple-darwin = "macos-15-intel"
